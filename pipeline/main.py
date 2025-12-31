@@ -91,5 +91,5 @@ def run_trial(youtube_url):
             print(f"🧹 Temporary video folder kept for review: {clean_session_folder}")
 
 if __name__ == "__main__":
-    TRIAL_LINK = "https://youtu.be/oEqf9Tj8I9c" 
+    TRIAL_LINK = "https://www.youtube.com/live/Pel6lO8qibg?si=QXfNHVTWF4rHOEj8" 
     run_trial(TRIAL_LINK)
