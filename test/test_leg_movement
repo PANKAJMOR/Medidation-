@@ -1,0 +1,332 @@
+# import sys
+# import os
+# import cv2
+# import time
+
+# # --------------------------------------------------
+# # Add project root
+# # --------------------------------------------------
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+# from yolo.inference import YOLOPoseDetector
+# from movement.leg import LegMovement
+# from tracking.iou_tracker import IOUTracker
+
+# # --------------------------------------------------
+# # Config
+# # --------------------------------------------------
+# VIDEO_PATH = r"D:\Meditation proctor\data\ef81e229\video.mp4"
+# DISPLAY_SCALE = 0.8
+# MAX_SECONDS = 180
+# WAIT_MS = 40
+
+# # --------------------------------------------------
+# # Initialize components
+# # --------------------------------------------------
+# detector = YOLOPoseDetector(
+#     weights="yolov8n-pose.pt",
+#     imgsz=640
+# )
+
+# tracker = IOUTracker(iou_thresh=0.3)
+
+# leg_movement = LegMovement(
+#     ankle_thresh=20,
+#     knee_dist_thresh=30,
+#     hold_seconds=1.5,
+#     fps=25,
+#     stable_frames=25
+# )
+
+# cap = cv2.VideoCapture(VIDEO_PATH)
+# start_time = time.time()
+
+# print("▶ Leg movement test started (press 'q' to quit)")
+
+# # --------------------------------------------------
+# # Main loop
+# # --------------------------------------------------
+# while cap.isOpened():
+
+#     ret, frame = cap.read()
+#     if not ret:
+#         break
+
+#     if time.time() - start_time > MAX_SECONDS:
+#         break
+
+#     detections = detector.detect(frame)
+
+#     # -------------------------------
+#     # Prepare bounding boxes
+#     # -------------------------------
+#     bboxes = []
+#     pose_map = {}
+
+#     for det in detections:
+#         x1, y1, x2, y2 = det.bbox
+#         area = (x2 - x1) * (y2 - y1)
+
+#         # Filter far / background persons
+#         if area < 6000:
+#             continue
+
+#         bbox = [x1, y1, x2, y2]
+#         bboxes.append(bbox)
+#         pose_map[tuple(bbox)] = det.keypoints
+
+#     # Keep max 3 closest persons
+#     bboxes = sorted(
+#         bboxes,
+#         key=lambda b: (b[2] - b[0]) * (b[3] - b[1]),
+#         reverse=True
+#     )[:3]
+
+#     tracked = tracker.update(bboxes)
+
+#     # -------------------------------
+#     # Process tracked persons
+#     # -------------------------------
+#     for track_id, bbox in tracked:
+#         x1, y1, x2, y2 = bbox
+#         person_id = f"person_{track_id}"
+
+#         keypoints = pose_map.get(tuple(bbox))
+#         if keypoints is None:
+#             continue
+
+#         # 🔑 Update LEG movement
+#         leg_movement.update(person_id, keypoints)
+
+#         # -------------------------------
+#         # Draw bounding box + ID
+#         # -------------------------------
+#         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+#         cv2.putText(
+#             frame,
+#             person_id,
+#             (x1, y1 - 10),
+#             cv2.FONT_HERSHEY_SIMPLEX,
+#             0.7,
+#             (0, 255, 255),
+#             2
+#         )
+
+#         # -------------------------------
+#         # Draw keypoints (visual debugging)
+#         # -------------------------------
+#         # Ankles (primary)
+#         for idx, color in [
+#             (15, (0, 0, 255)),   # left ankle
+#             (16, (0, 0, 255))    # right ankle
+#         ]:
+#             xk, yk = keypoints[idx]
+#             if xk > 0 and yk > 0:
+#                 cv2.circle(frame, (int(xk), int(yk)), 6, color, -1)
+
+#         # Knees (proxy only — visual)
+#         for idx in [13, 14]:
+#             xk, yk = keypoints[idx]
+#             if xk > 0 and yk > 0:
+#                 cv2.circle(frame, (int(xk), int(yk)), 4, (255, 0, 0), -1)
+
+#         # -------------------------------
+#         # Draw LEG movement counter
+#         # -------------------------------
+#         count = leg_movement.get_count(person_id)
+#         cv2.putText(
+#             frame,
+#             f"leg: {count}",
+#             (x1, y2 + 25),
+#             cv2.FONT_HERSHEY_SIMPLEX,
+#             0.8,
+#             (0, 255, 0),
+#             2
+#         )
+
+#     # -------------------------------
+#     # Display
+#     # -------------------------------
+#     frame_disp = cv2.resize(frame, (0, 0), fx=DISPLAY_SCALE, fy=DISPLAY_SCALE)
+#     cv2.imshow("Leg Movement Test (Ankle + Knee-Distance)", frame_disp)
+
+#     if cv2.waitKey(WAIT_MS) & 0xFF == ord("q"):
+#         break
+
+# # --------------------------------------------------
+# # Cleanup
+# # --------------------------------------------------
+# cap.release()
+# cv2.destroyAllWindows()
+
+# print("\n▶ Final leg movement counts:")
+# for pid, cnt in leg_movement.count.items():
+#     print(pid, cnt)
+
+# print("✔ Leg test completed successfully")
+
+
+import sys
+import os
+import cv2
+import time
+from collections import defaultdict
+
+# --------------------------------------------------
+# Add project root
+# --------------------------------------------------
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from yolo.inference import YOLOPoseDetector
+from movement.leg import LegMovement
+from tracking.iou_tracker import IOUTracker
+
+# --------------------------------------------------
+# Config
+# --------------------------------------------------
+VIDEO_PATH = r"D:\Meditation proctor\data\ef81e229\video.mp4"
+DISPLAY_SCALE = 0.8
+MAX_SECONDS = 180
+WAIT_MS = 40
+
+# --------------------------------------------------
+# Initialize components
+# --------------------------------------------------
+detector = YOLOPoseDetector(
+    weights="yolov8n-pose.pt",
+    imgsz=640
+)
+
+tracker = IOUTracker(iou_thresh=0.3)
+
+leg_movement = LegMovement(
+    ankle_thresh=20,
+    knee_dist_thresh=30,
+    hold_seconds=1.5,
+    fps=25,
+    stable_frames=25
+)
+
+# -------------------------------
+# TEST-SIDE STATE
+# -------------------------------
+leg_counts = defaultdict(int)
+leg_state = defaultdict(lambda: "STABLE")
+
+cap = cv2.VideoCapture(VIDEO_PATH)
+start_time = time.time()
+
+print("▶ Leg movement test started (press 'q' to quit)")
+
+# --------------------------------------------------
+# Main loop
+# --------------------------------------------------
+while cap.isOpened():
+
+    ret, frame = cap.read()
+    if not ret:
+        break
+
+    if time.time() - start_time > MAX_SECONDS:
+        break
+
+    detections = detector.detect(frame)
+
+    # -------------------------------
+    # Prepare bounding boxes
+    # -------------------------------
+    bboxes = []
+    pose_map = {}
+
+    for det in detections:
+        x1, y1, x2, y2 = det.bbox
+        area = (x2 - x1) * (y2 - y1)
+
+        if area < 6000:
+            continue
+
+        bbox = [x1, y1, x2, y2]
+        bboxes.append(bbox)
+        pose_map[tuple(bbox)] = det.keypoints
+
+    # Keep max 3 closest persons
+    bboxes = sorted(
+        bboxes,
+        key=lambda b: (b[2] - b[0]) * (b[3] - b[1]),
+        reverse=True
+    )[:3]
+
+    tracked = tracker.update(bboxes)
+
+    # -------------------------------
+    # Process tracked persons
+    # -------------------------------
+    for track_id, bbox in tracked:
+        x1, y1, x2, y2 = bbox
+        person_id = f"person_{track_id}"
+
+        keypoints = pose_map.get(tuple(bbox))
+        if keypoints is None:
+            continue
+
+        # 🔑 UPDATE LEG MODULE
+        signal = leg_movement.update(person_id, keypoints)
+
+        if signal == "START":
+            leg_counts[person_id] += 1
+            leg_state[person_id] = "MOVING"
+            print(f"[{person_id}] LEG START → count={leg_counts[person_id]}")
+
+        elif signal == "END":
+            leg_state[person_id] = "STABLE"
+            print(f"[{person_id}] LEG END")
+
+        # -------------------------------
+        # Draw bounding box + ID
+        # -------------------------------
+        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        cv2.putText(
+            frame,
+            f"{person_id} | leg={leg_counts[person_id]} | {leg_state[person_id]}",
+            (x1, y1 - 10),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.6,
+            (0, 255, 255),
+            2
+        )
+
+        # -------------------------------
+        # Visual debugging (keypoints)
+        # -------------------------------
+        # Ankles (primary signal)
+        for idx in [15, 16]:
+            xk, yk = keypoints[idx]
+            if xk > 0 and yk > 0:
+                cv2.circle(frame, (int(xk), int(yk)), 6, (0, 0, 255), -1)
+
+        # Knees (secondary proxy)
+        for idx in [13, 14]:
+            xk, yk = keypoints[idx]
+            if xk > 0 and yk > 0:
+                cv2.circle(frame, (int(xk), int(yk)), 4, (255, 0, 0), -1)
+
+    # -------------------------------
+    # Display
+    # -------------------------------
+    frame_disp = cv2.resize(frame, (0, 0), fx=DISPLAY_SCALE, fy=DISPLAY_SCALE)
+    cv2.imshow("Leg Movement Test (START / END)", frame_disp)
+
+    if cv2.waitKey(WAIT_MS) & 0xFF == ord("q"):
+        break
+
+# --------------------------------------------------
+# Cleanup
+# --------------------------------------------------
+cap.release()
+cv2.destroyAllWindows()
+
+print("\n▶ Final leg movement counts:")
+for pid, cnt in leg_counts.items():
+    print(pid, cnt)
+
+print("✔ Leg test completed successfully")
