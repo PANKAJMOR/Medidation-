@@ -30,6 +30,7 @@ tools/
 output/
 outputs/
 reports/
+videos/
 pdf_reports/
 *.pdf
 *.csv

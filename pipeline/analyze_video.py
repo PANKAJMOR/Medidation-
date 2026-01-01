@@ -1,11 +1,8 @@
 import sys
 import os
-
-
-
-# --------------------------------------------------
-# Add project root
-# --------------------------------------------------
+from dotenv import load_dotenv  # ✅ ADD THIS
+load_dotenv()  # ✅ ADD THIS
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import time
 import cv2
@@ -236,7 +233,7 @@ def analyze_video(video_path):
         VideoAccessCheck(),
         IlluminationCheck(),
         VideoMetadataCheck(min_duration_sec=2.75 * 3600),
-        TimestampCheck(required_year=2025),
+        TimestampCheck(required_year=2026),
         FreezeCheck(sample_frames=15 * 60),
         ParticipantCheck()
     ]
@@ -463,7 +460,8 @@ def analyze_video(video_path):
     # 7. PDF GENERATION (ONE PER PARTICIPANT)
     # --------------------------------------------------
     pdf_reports = {}
-    output_dir = "output/pdf_reports"
+    output_dir = os.getenv("PDF_REPORT_DIR", "output/pdf_reports")
+    
 
     for person_id, person_report in final_report.items():
         role = role_assigner.role_map.get(person_id, "UNKNOWN")
