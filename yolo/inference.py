@@ -11,7 +11,7 @@ class PoseDetection:
 class YOLOPoseDetector:
     def __init__(
         self,
-        weights="yolov11n-pose.pt",
+        weights="yolov11l-pose.pt",
         conf=0.4,
         iou=0.5,
         imgsz=640        # 🔑 BEST SIZE FOR POSE

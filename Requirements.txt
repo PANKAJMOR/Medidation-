@@ -60,3 +60,48 @@ python-dotenv==1.0.0
 # ├── .env.example                 # Template for configuration
 # ├── Dockerfile                   # If using Docker (optional)
 # └── [all your project files]
+
+
+
+# how to download ffmpeg and set up 
+
+# https://www.gyan.dev/ffmpeg/builds/
+
+# Above is tthe link to copy command to install ffmpeg
+
+
+# while installing ffmpeg as we are working on 64bit ARM we cannot install it using "winget" so we are going to install it using chocolatey.
+
+# here are the steps to follow while installing it
+
+# first to install chocolatey:
+# You need to Run powershell as administrator, next you'll be pasting below command:
+# "Set-ExecutionPolicy Bypass -Scope Process -Force; `                                             >> [System.Net.ServicePointManager]::SecurityProtocol = `                                                               >> [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; `                                                      >> iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))"
+
+
+# ########################################################################################################
+# in powershell
+# ########################################################################################################
+# Set-ExecutionPolicy Bypass -Scope Process -Force
+# [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+# iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+# #########################################################################################################
+# choco install ffmpeg
+# #########################################################################################################
+# #########################################################################################################
+
+# make sure to remove string quotes.
+
+# then you will visit the gyan.dev link provided above and from there you'll copy the command
+
+# "choco install ffmpeg"    ## avoid quotes
+
+
+
+# After installing ffmpeg make sure you give proper path to your ffmpeg package to backend code.
+
+# @IN CMD
+# You can use this command "where ffmpeg" to know the path it will give path example below:
+# "C:\ProgramData\chocolatey\bin\ffmpeg.exe"
+
+# AFter this add this path to ffmpeg path in code.

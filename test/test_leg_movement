@@ -184,7 +184,7 @@ from tracking.iou_tracker import IOUTracker
 # --------------------------------------------------
 # Config
 # --------------------------------------------------
-VIDEO_PATH = r"D:\Meditation proctor\data\ef81e229\video.mp4"
+VIDEO_PATH = r"D:\Pankaj\Meditation proctor Main\data\ef81e229\video.mp4"
 DISPLAY_SCALE = 0.8
 MAX_SECONDS = 180
 WAIT_MS = 40

@@ -118,8 +118,8 @@ class MovementManager:
         # Sub-modules
         # -------------------------
         self.neck = FaceNeckMovement(
-            yaw_delta_thresh=9.0,
-            pitch_delta_thresh=8.0,
+            yaw_delta_thresh=6.0,
+            pitch_delta_thresh=5.0,
             hold_frames=3,
             cooldown_seconds=2.0,
             fps=fps
@@ -134,8 +134,8 @@ class MovementManager:
         )
 
         self.leg = LegMovement(
-            ankle_thresh=20,
-            knee_dist_thresh=30,
+            ankle_thresh=10,
+            knee_dist_thresh=20,
             hold_seconds=1.5,
             fps=fps,
             stable_frames=25
