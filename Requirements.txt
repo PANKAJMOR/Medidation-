@@ -1,16 +1,18 @@
 # Meditation Proctor System - Production Requirements
 # Python 3.8+ required
-python==3.11.9
+
 ultralytics==8.3.236
-torch==2.5.1
-torchvision==0.20.1
-opencv-python==4.11.0
+torch==2.0.0
+torchvision==0.15.0
+opencv-python==4.11.0.86
 mediapipe==0.10.21
 numpy==1.26.4
 scipy==1.16.3
 reportlab==4.4.7
 yt-dlp==2025.12.08
 python-dotenv==1.0.0
+
+
 
 # ============================================
 # NOTES FOR DEPLOYMENT
@@ -23,3 +25,38 @@ python-dotenv==1.0.0
 # System Dependencies (install separately):
 #   - FFmpeg (for video processing)
 #   - Visual C++ Redistributable (Windows)
+
+# # Step 1: Install FFmpeg (ONE TIME)
+# choco install ffmpeg              # Windows
+# # OR
+# sudo apt-get install ffmpeg       # Linux
+
+# # Step 2: Setup Python Environment
+# python -m venv venv
+# venv\Scripts\activate             # Windows
+# source venv/bin/activate          # Linux
+
+# # Step 3: Install Python Packages
+# pip install -r requirements.txt
+
+# # Step 4: Configure
+# # Create .env file with correct paths
+
+# # Step 5: Run
+# python main.py
+# ```
+
+# ---
+
+# ## Your Complete Deployment Package:
+
+# 📦 **Files to Upload to Server:**
+# ```
+# ├── requirements.txt              # Python packages
+# ├── system-dependencies.txt       # FFmpeg install commands
+# ├── setup.ps1 or setup.sh        # Automated setup (optional)
+# ├── test_ffmpeg.py               # Verify FFmpeg works
+# ├── check_versions.py            # Verify all packages
+# ├── .env.example                 # Template for configuration
+# ├── Dockerfile                   # If using Docker (optional)
+# └── [all your project files]
