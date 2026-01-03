@@ -94,7 +94,7 @@ def analyze_video(video_path):
 
     tracker = IOUTracker(iou_thresh=0.3)
     role_assigner = RoleAssigner()
-    movement_manager = MovementManager(fps=25)
+    movement_manager = MovementManager(fps=1)
 
     cap = cv2.VideoCapture(video_path)
     fps = cap.get(cv2.CAP_PROP_FPS)

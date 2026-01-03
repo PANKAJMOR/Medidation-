@@ -27,8 +27,8 @@ env/
 # =========================
 data/
 tools/
-output/
-outputs/
+# output/
+# outputs/
 reports/
 videos/
 pdf/

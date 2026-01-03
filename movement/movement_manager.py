@@ -126,19 +126,19 @@ class MovementManager:
         )
 
         self.arm = ArmMovement(
-            wrist_thresh=4,
-            elbow_thresh=6,
-            hold_seconds=0.6,
+            wrist_thresh=15,
+            elbow_thresh=20,
+            hold_seconds=0.8,
             fps=fps,
             lap_margin=20
         )
 
         self.leg = LegMovement(
             ankle_thresh=10,
-            knee_dist_thresh=30,
-            hold_seconds=1.3,
+            knee_dist_thresh=20,
+            hold_seconds=5,
             fps=fps,
-            stable_frames=18
+            stable_frames=10
         )
 
         # -------------------------
