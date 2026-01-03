@@ -134,11 +134,11 @@ class MovementManager:
         )
 
         self.leg = LegMovement(
-            ankle_thresh=8,
-            knee_dist_thresh=25,
-            hold_seconds=1,
+            ankle_thresh=10,
+            knee_dist_thresh=30,
+            hold_seconds=1.3,
             fps=fps,
-            stable_frames=10
+            stable_frames=18
         )
 
         # -------------------------
