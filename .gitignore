@@ -52,7 +52,7 @@ weights/
 *.avi
 *.mov
 *.mkv
-*.wav
+
 
 # =========================
 # IDE & OS files
