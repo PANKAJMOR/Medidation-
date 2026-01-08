@@ -106,38 +106,39 @@ class VideoIngestion:
                 return pipe
         except Exception:
             return None
-
-    # -------------------------------
-    # Main ingestion logic
-    # -------------------------------
-    def ingest(self, src):
-        video_id = self.generate_video_id()
+        
+    
+    def ingest(self, src, video_id=None):
+        # If a session_id is passed, use it; otherwise generate a random UUID
+        if video_id is None:
+            video_id = self.generate_video_id()
+        
+        # Construct the directory path using the provided session_id
         video_dir = os.path.join(self.base_dir, video_id)
         os.makedirs(video_dir, exist_ok=True)
 
+        # Define the local video path inside the session folder
         local_video_path = os.path.join(video_dir, "video.mp4")
-        # Normalize the path immediately
+        # Normalize the path for Windows/Linux compatibility
         local_video_path = os.path.abspath(os.path.normpath(local_video_path))
 
         # Case 1: Local file
         if os.path.exists(src):
             mode = "local"
-            # Return absolute normalized path
             return os.path.abspath(os.path.normpath(src)), video_id, mode
 
         # Case 2: YouTube
         if self.is_youtube(src):
-            # Try streaming on non-Windows
             stream = self.try_stream(src)
             if stream:
                 return stream, video_id, "stream"
 
-            # Otherwise download
+            # Download video to the specifically named session folder
             downloaded_path = self.download_video(src, local_video_path)
-            # Verify download succeeded
             if not downloaded_path or not os.path.exists(downloaded_path):
                 print(f"❌ Download failed: file does not exist")
                 return None, None, None
+            
             print(f"✅ Downloaded successfully to: {downloaded_path}")
             return downloaded_path, video_id, "download"
 
@@ -145,14 +146,61 @@ class VideoIngestion:
         if self.is_drive(src):
             clean_url = self.resolve_drive_url(src)
             downloaded_path = self.download_video(clean_url, local_video_path)
-            # Verify download succeeded
             if not downloaded_path or not os.path.exists(downloaded_path):
                 print(f"❌ Download failed: file does not exist")
                 return None, None, None
+            
             print(f"✅ Downloaded successfully to: {downloaded_path}")
             return downloaded_path, video_id, "download"
 
         return None, None, None
+
+    # -------------------------------
+    # Main ingestion logic
+    # -------------------------------
+    # def ingest(self, src):
+    #     video_id = self.generate_video_id()
+    #     video_dir = os.path.join(self.base_dir, video_id)
+    #     os.makedirs(video_dir, exist_ok=True)
+
+    #     local_video_path = os.path.join(video_dir, "video.mp4")
+    #     # Normalize the path immediately
+    #     local_video_path = os.path.abspath(os.path.normpath(local_video_path))
+
+    #     # Case 1: Local file
+    #     if os.path.exists(src):
+    #         mode = "local"
+    #         # Return absolute normalized path
+    #         return os.path.abspath(os.path.normpath(src)), video_id, mode
+
+    #     # Case 2: YouTube
+    #     if self.is_youtube(src):
+    #         # Try streaming on non-Windows
+    #         stream = self.try_stream(src)
+    #         if stream:
+    #             return stream, video_id, "stream"
+
+    #         # Otherwise download
+    #         downloaded_path = self.download_video(src, local_video_path)
+    #         # Verify download succeeded
+    #         if not downloaded_path or not os.path.exists(downloaded_path):
+    #             print(f"❌ Download failed: file does not exist")
+    #             return None, None, None
+    #         print(f"✅ Downloaded successfully to: {downloaded_path}")
+    #         return downloaded_path, video_id, "download"
+
+    #     # Case 3: Google Drive
+    #     if self.is_drive(src):
+    #         clean_url = self.resolve_drive_url(src)
+    #         downloaded_path = self.download_video(clean_url, local_video_path)
+    #         # Verify download succeeded
+    #         if not downloaded_path or not os.path.exists(downloaded_path):
+    #             print(f"❌ Download failed: file does not exist")
+    #             return None, None, None
+    #         print(f"✅ Downloaded successfully to: {downloaded_path}")
+    #         return downloaded_path, video_id, "download"
+
+    #     return None, None, None
 
     # -------------------------------
     # Extract frames at given FPS

@@ -31,7 +31,7 @@ from runtime_checks.freeze_monitor import RuntimeFreezeMonitor
 from runtime_checks.participant_discontinuity import ParticipantDiscontinuity
 
 
-def analyze_video(video_path):
+def analyze_video(video_path, session_id, participant_ids):
     """
     Main production entrypoint
     """
@@ -272,28 +272,43 @@ def analyze_video(video_path):
         movement_timestamps=formatted_timestamps
     )
 
-
+    
     # --------------------------------------------------
-    # 7. PDF GENERATION (ONE PER PARTICIPANT)
+    # 7. PDF GENERATION (DYNAMIC PATHS & NAMING)
     # --------------------------------------------------
     pdf_reports = {}
-    output_dir = os.getenv("PDF_REPORT_DIR", "output/pdf_reports")
     
+    # Get the base directory from .env
+    base_output_dir = os.getenv("PDF_REPORT_DIR", "output/pdf_reports")
+    
+    # Create a subfolder named after the Session ID
+    session_specific_dir = os.path.join(base_output_dir, session_id)
+    os.makedirs(session_specific_dir, exist_ok=True)
+    
+    # Sort detected internal IDs (person_0, person_1, etc.) 
+    # to ensure consistent mapping to the API participant list
+    sorted_person_ids = sorted(final_report.keys())
 
-    for person_id, person_report in final_report.items():
+    for i, person_id in enumerate(sorted_person_ids):
+        person_report = final_report[person_id]
         role = role_assigner.role_map.get(person_id, "UNKNOWN")
         index = role_assigner.index_map.get(person_id, -1)
 
+        # Map the internal person_id to the actual database ID by index
+        # If there are more people detected than IDs provided, fallback to internal ID
+        actual_filename_id = participant_ids[i] if i < len(participant_ids) else person_id
+
+        # Generate the PDF inside the session subfolder with the participant ID as name
         pdf_path = generate_participant_pdf(
-            output_dir=output_dir,
-            participant_id=person_id,
+            output_dir=session_specific_dir,
+            participant_id=actual_filename_id, 
             participant_report=person_report,
             role=role,
             index=index
         )
 
-        pdf_reports[person_id] = pdf_path
-
+        # Store the mapping for the return value
+        pdf_reports[actual_filename_id] = pdf_path
 
     return {
         "status": "SUCCESS",
@@ -302,4 +317,34 @@ def analyze_video(video_path):
         "index_mapping": role_assigner.index_map,
         "pdf_reports": pdf_reports
     }
+    
+    # # --------------------------------------------------
+    # # 7. PDF GENERATION (ONE PER PARTICIPANT)
+    # # --------------------------------------------------
+    # pdf_reports = {}
+    # output_dir = os.getenv("PDF_REPORT_DIR", "output/pdf_reports")
+    
+
+    # for person_id, person_report in final_report.items():
+    #     role = role_assigner.role_map.get(person_id, "UNKNOWN")
+    #     index = role_assigner.index_map.get(person_id, -1)
+
+    #     pdf_path = generate_participant_pdf(
+    #         output_dir=output_dir,
+    #         participant_id=person_id,
+    #         participant_report=person_report,
+    #         role=role,
+    #         index=index
+    #     )
+
+    #     pdf_reports[person_id] = pdf_path
+
+
+    # return {
+    #     "status": "SUCCESS",
+    #     "participants": final_report,
+    #     "role_mapping": role_assigner.role_map,
+    #     "index_mapping": role_assigner.index_map,
+    #     "pdf_reports": pdf_reports
+    # }
 
