@@ -278,15 +278,15 @@ def analyze_video(video_path, session_id, participant_ids):
     # --------------------------------------------------
     pdf_reports = {}
     
-    # Get the base directory from .env
-    base_output_dir = os.getenv("PDF_REPORT_DIR", "output/pdf_reports")
+    # Get the base directory from .env and normalize it
+    base_output_dir = os.path.normpath(os.getenv("PDF_REPORT_DIR", "output/pdf_reports"))
     
     # Create a subfolder named after the Session ID
     session_specific_dir = os.path.join(base_output_dir, session_id)
     os.makedirs(session_specific_dir, exist_ok=True)
     
     # Sort detected internal IDs (person_0, person_1, etc.) 
-    # to ensure consistent mapping to the API participant list
+    # to ensure consistent mapping to the API participant list index
     sorted_person_ids = sorted(final_report.keys())
 
     for i, person_id in enumerate(sorted_person_ids):
@@ -294,57 +294,27 @@ def analyze_video(video_path, session_id, participant_ids):
         role = role_assigner.role_map.get(person_id, "UNKNOWN")
         index = role_assigner.index_map.get(person_id, -1)
 
-        # Map the internal person_id to the actual database ID by index
-        # If there are more people detected than IDs provided, fallback to internal ID
-        actual_filename_id = participant_ids[i] if i < len(participant_ids) else person_id
+        # Map the internal person_id to the actual database ID from the API list
+        # This ensures the PDF filename matches the participantId in your database
+        actual_participant_id = participant_ids[i] if i < len(participant_ids) else person_id
 
-        # Generate the PDF inside the session subfolder with the participant ID as name
+        # Generate the PDF inside the session subfolder
         pdf_path = generate_participant_pdf(
             output_dir=session_specific_dir,
-            participant_id=actual_filename_id, 
+            participant_id=actual_participant_id, 
             participant_report=person_report,
             role=role,
             index=index
         )
 
-        # Store the mapping for the return value
-        pdf_reports[actual_filename_id] = pdf_path
+        # Store the mapping using the Database ID as the key for app.py to upload
+        pdf_reports[actual_participant_id] = os.path.normpath(pdf_path)
 
     return {
         "status": "SUCCESS",
         "participants": final_report,
-        "role_mapping": role_assigner.role_map,
-        "index_mapping": role_assigner.index_map,
         "pdf_reports": pdf_reports
     }
     
-    # # --------------------------------------------------
-    # # 7. PDF GENERATION (ONE PER PARTICIPANT)
-    # # --------------------------------------------------
-    # pdf_reports = {}
-    # output_dir = os.getenv("PDF_REPORT_DIR", "output/pdf_reports")
-    
-
-    # for person_id, person_report in final_report.items():
-    #     role = role_assigner.role_map.get(person_id, "UNKNOWN")
-    #     index = role_assigner.index_map.get(person_id, -1)
-
-    #     pdf_path = generate_participant_pdf(
-    #         output_dir=output_dir,
-    #         participant_id=person_id,
-    #         participant_report=person_report,
-    #         role=role,
-    #         index=index
-    #     )
-
-    #     pdf_reports[person_id] = pdf_path
-
-
-    # return {
-    #     "status": "SUCCESS",
-    #     "participants": final_report,
-    #     "role_mapping": role_assigner.role_map,
-    #     "index_mapping": role_assigner.index_map,
-    #     "pdf_reports": pdf_reports
-    # }
+  
 
